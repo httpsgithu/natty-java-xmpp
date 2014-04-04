@@ -26,6 +26,24 @@ public class Natty {
         // Create a connection to the jabber.org server on a specific port.
         final ConnectionConfiguration config = 
                 new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+        config.setExpiredCertificatesCheckEnabled(true);
+        config.setNotMatchingDomainCheckEnabled(true);
+        
+        // This will automatically send out a presence message when we log in.
+        config.setSendPresence(true);
+
+        config.setCompressionEnabled(true);
+
+        //config.setRosterLoadedAtLogin(true);
+        config.setReconnectionAllowed(false);
+
+        config.setVerifyChainEnabled(true);
+
+        // This is commented out because the Google Talk signing cert is not
+        // trusted by java by default.
+        config.setVerifyRootCAEnabled(true);
+        config.setSelfSignedCertificateEnabled(false);
+        
         final Connection gtalk = new XMPPConnection(config);
         gtalk.connect();
         
@@ -50,9 +68,9 @@ public class Natty {
         Map<String, String> environ = builder.environment();
 
         final Process process = builder.start();
-        InputStream is = process.getInputStream();
-        InputStreamReader isr = new InputStreamReader(is);
-        BufferedReader br = new BufferedReader(isr);
+        final InputStream is = process.getInputStream();
+        final InputStreamReader isr = new InputStreamReader(is);
+        final BufferedReader br = new BufferedReader(isr);
         String line;
         while ((line = br.readLine()) != null) {
           System.out.println(line);
