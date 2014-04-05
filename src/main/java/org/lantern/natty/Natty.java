@@ -26,6 +26,7 @@ public class Natty {
         // Create a connection to the jabber.org server on a specific port.
         final ConnectionConfiguration config = 
                 new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+        /*
         config.setExpiredCertificatesCheckEnabled(true);
         config.setNotMatchingDomainCheckEnabled(true);
         
@@ -43,6 +44,7 @@ public class Natty {
         // trusted by java by default.
         config.setVerifyRootCAEnabled(true);
         config.setSelfSignedCertificateEnabled(false);
+        */
         
         final Connection gtalk = new XMPPConnection(config);
         gtalk.connect();
@@ -61,7 +63,7 @@ public class Natty {
     private static void runNatty(final String target) throws IOException {
         final List<String> command = new ArrayList<String>();
         command.add("./natty");
-        command.add(target);
+        command.add("-offer");
 
 
         final ProcessBuilder builder = new ProcessBuilder(command);
