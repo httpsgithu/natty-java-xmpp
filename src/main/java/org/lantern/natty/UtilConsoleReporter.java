@@ -25,10 +25,10 @@ import com.yammer.metrics.core.Metered;
 import com.yammer.metrics.core.Metric;
 import com.yammer.metrics.core.MetricName;
 import com.yammer.metrics.core.MetricPredicate;
-//import com.yammer.metrics.core.MetricProcessor;
+import com.yammer.metrics.core.MetricProcessor;
 import com.yammer.metrics.core.MetricsRegistry;
 import com.yammer.metrics.core.Timer;
-//import com.yammer.metrics.reporting.AbstractPollingReporter;
+import com.yammer.metrics.reporting.AbstractPollingReporter;
 import com.yammer.metrics.stats.Snapshot;
 
 import java.io.PrintStream;
