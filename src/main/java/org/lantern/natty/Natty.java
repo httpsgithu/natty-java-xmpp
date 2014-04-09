@@ -33,14 +33,18 @@ public class Natty {
     private ProcessBuilder builder;
     private Process process;
     private String offer;
+    private String answer;
     private BufferedReader reader;
     private BufferedWriter writer;
     private boolean sendOffer;
+
+    private SendFileServer fileServer;
 
     public Natty() {
       config = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
       gtalk  = new XMPPConnection(config);
       offer  = null;
+      fileServer = new SendFileServer(8585);
     }
 
     /**
@@ -61,17 +65,29 @@ public class Natty {
         public void processPacket(final Packet pack) {
           System.out.println("PACKET FROM: "+pack.getFrom());
           final Message msg = (Message) pack;
-          System.out.println(msg.getBody());
           try { 
-            if (offer != null) {
+            if (msg.getBody().contains("offer")) {
+
+              System.out.println("GOT OFFER " + msg.getBody());
               start("");
               sendAnswer();
+
+              /* Reply with answer packet */
+              msg.setTo(pack.getFrom());
+              msg.setBody(answer);
+              gtalk.sendPacket(msg);
+            }
+            else if (msg.getBody().contains("answer")) {
+              System.out.println("GOT ANSWER " + msg.getBody());
+              
             }
           }
           catch (IOException ioe) {
+            ioe.printStackTrace();
             System.out.println("ERROR " + ioe);
           }
           catch (InterruptedException ie) {
+            ie.printStackTrace();
             System.out.println("ERROR " + ie);
           }
         }
@@ -135,9 +151,11 @@ public class Natty {
         try {
           String line;
           while ((line = this.reader.readLine()) != null) {
-            System.out.println(line);
             if (line.contains("offer")) {
               offer = line;
+            }
+            else if (line.contains("answer")) {
+              answer = line;
             }
           }
         } catch (IOException e) {
@@ -147,7 +165,6 @@ public class Natty {
     }
 
     private void sendAnswer() throws IOException, InterruptedException {
-
       System.out.println("Sending reply " + offer);
       writer.write(offer);
       writer.newLine();
