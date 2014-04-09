@@ -30,9 +30,12 @@ public class Natty {
     private final ConnectionConfiguration config;
     private final Connection gtalk;
 
-    private String message;
     private ProcessBuilder builder;
     private Process process;
+    private String offer;
+    private BufferedReader reader;
+    private BufferedWriter writer;
+    private boolean sendOffer;
 
     public Natty() {
       config = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
@@ -118,53 +121,67 @@ public class Natty {
         natty.run("-offer");
     }
 
-    private void readResponse() throws IOException, InterruptedException {
-      BufferedReader br = null;
-      try { 
-        final InputStream is = process.getInputStream();
-        final InputStreamReader isr = new InputStreamReader(is);
-        br = new BufferedReader(isr);
-        String line;
-        while ((line = br.readLine()) != null) {
-          System.out.println(line);
-          if (line.contains("offer") || line.contains("answer")) {
-            message = line;
-            break;
+    private class Read extends Thread {
+
+      private BufferedReader reader;
+
+      public Read(BufferedReader reader) {
+        this.reader = reader;
+      }
+
+      public void run() {
+        try {
+          String line;
+          while ((line = this.reader.readLine()) != null) {
+            System.out.println(line);
+            if (line.contains("offer")) {
+              offer = line;
+            }
           }
-        }
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-      finally {
-        if (br != null) {
-          br.close();
+        } catch (IOException e) {
+          e.printStackTrace();
         }
       }
     }
 
-    private void sendResponse() throws IOException, InterruptedException {
-
-      final OutputStream stdin = process.getOutputStream (); 
-      BufferedWriter writer = new BufferedWriter(new OutputStreamWriter(stdin));
-      System.out.println("Writing message " + message);
-      writer.write(message);
+    private void sendAnswer() throws IOException, InterruptedException {
+      //String [] parts = message.split("\n");
+      System.out.println("Sending reply " + offer);
+      writer.write(offer);
       writer.newLine();
+      writer.flush();
       writer.close();
-      readResponse();
+      Thread.sleep(4000);
     }
 
-    private void run(final String target) throws IOException, InterruptedException, IOException {
+    private void start(final String target) throws IOException, InterruptedException, IOException {
+
         final List<String> command = new ArrayList<String>();
         command.add("./natty");
         command.add(target);
-
         builder = new ProcessBuilder(command);
+
         builder.redirectErrorStream(true);
 
         Map<String, String> environ = builder.environment();
 
         process = builder.start();
 
+        /* initiate reader */
+        final InputStream is = process.getInputStream();
+        final InputStreamReader isr = new InputStreamReader(is);
+        this.reader = new BufferedReader(isr);
+
+        final OutputStream stdin = process.getOutputStream (); 
+        this.writer = new BufferedWriter(new OutputStreamWriter(stdin));
+
+        new Read(this.reader).start();
+      }
+
+      public void run(final String target) throws IOException, InterruptedException, IOException {
+        start("-offer");
+        Thread.sleep(3000);
+        start("");
         sendResponse();
     }
 
