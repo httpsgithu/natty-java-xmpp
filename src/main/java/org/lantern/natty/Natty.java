@@ -61,6 +61,16 @@ public class Natty {
           System.out.println("PACKET FROM: "+pack.getFrom());
           final Message msg = (Message) pack;
           System.out.println(msg.getBody());
+          try { 
+            start("");
+            sendAnswer();
+          }
+          catch (IOException ioe) {
+            System.out.println("ERROR " + ioe);
+          }
+          catch (InterruptedException ie) {
+            System.out.println("ERROR " + ie);
+          }
         }
       }, new PacketFilter() {
 
@@ -85,8 +95,7 @@ public class Natty {
             final Message msg = new Message();
             msg.setTo(from);
             //System.out.println("Sending message: " + message);
-            msg.setBody(message);
-              
+            msg.setBody(offer);
             gtalk.sendPacket(msg);
           }
         }
@@ -109,16 +118,6 @@ public class Natty {
         System.out.println(re.getUser());
       }
 
-    }
-
-    public static void main(final String[] args) throws Exception {
-        // Create a connection to the jabber.org server on a specific port.
-        Natty natty = new Natty();
-        final String user = args[0];
-        final String pass = args[1];
-
-        natty.connectGTalk(user, pass);
-        natty.run("-offer");
     }
 
     private class Read extends Thread {
@@ -145,7 +144,7 @@ public class Natty {
     }
 
     private void sendAnswer() throws IOException, InterruptedException {
-      //String [] parts = message.split("\n");
+
       System.out.println("Sending reply " + offer);
       writer.write(offer);
       writer.newLine();
@@ -178,11 +177,19 @@ public class Natty {
         new Read(this.reader).start();
       }
 
-      public void run(final String target) throws IOException, InterruptedException, IOException {
-        start("-offer");
-        Thread.sleep(3000);
-        start("");
-        sendResponse();
+    private void run() throws IOException, InterruptedException, IOException {
+      start("-offer");
+      Thread.sleep(30000);
+    }
+
+    public static void main(final String[] args) throws Exception {
+      // Create a connection to the jabber.org server on a specific port.
+      Natty natty = new Natty();
+      final String user = args[0];
+      final String pass = args[1];
+
+      natty.connectGTalk(user, pass);
+      natty.run();
     }
 
 }
