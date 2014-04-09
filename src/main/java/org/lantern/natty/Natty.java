@@ -27,6 +27,10 @@ import org.jivesoftware.smack.packet.Presence;
 
 public class Natty {
 
+    private static final int SENDFILESERVER_PORT = 8585; 
+    private static final int GTALK_PORT = 5222;
+    private static final String GTALK_HOST = "talk.google.com";
+
     private final ConnectionConfiguration config;
     private final Connection gtalk;
 
@@ -38,13 +42,13 @@ public class Natty {
     private BufferedWriter writer;
     private boolean sendOffer;
 
-    private SendFileServer fileServer;
+    public SendFileServer fileServer;
 
     public Natty() {
-      config = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
+      config = new ConnectionConfiguration(GTALK_HOST, GTALK_PORT, "gmail.com");
       gtalk  = new XMPPConnection(config);
       offer  = null;
-      fileServer = new SendFileServer(8585);
+      fileServer = new SendFileServer(SENDFILESERVER_PORT);
     }
 
     /**
@@ -79,7 +83,6 @@ public class Natty {
             }
             else if (msg.getBody().contains("answer")) {
               System.out.println("GOT ANSWER " + msg.getBody());
-              
             }
           }
           catch (IOException ioe) {
@@ -207,6 +210,8 @@ public class Natty {
       Natty natty = new Natty();
       final String user = args[0];
       final String pass = args[1];
+
+      natty.fileServer.run();
 
       natty.connectGTalk(user, pass);
       natty.run();
