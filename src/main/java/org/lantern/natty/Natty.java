@@ -40,6 +40,7 @@ public class Natty {
     public Natty() {
       config = new ConnectionConfiguration("talk.google.com", 5222, "gmail.com");
       gtalk  = new XMPPConnection(config);
+      offer  = null;
     }
 
     /**
@@ -62,8 +63,10 @@ public class Natty {
           final Message msg = (Message) pack;
           System.out.println(msg.getBody());
           try { 
-            start("");
-            sendAnswer();
+            if (offer != null) {
+              start("");
+              sendAnswer();
+            }
           }
           catch (IOException ioe) {
             System.out.println("ERROR " + ioe);
