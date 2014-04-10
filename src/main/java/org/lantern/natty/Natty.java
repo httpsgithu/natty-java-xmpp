@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.io.BufferedWriter;
 import java.io.OutputStreamWriter;
 import java.io.OutputStream;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -38,6 +39,7 @@ public class Natty {
     private static final int GTALK_PORT = 5222;
     private static final int NATTY_ALIVE_INTERVAL = 50000;
     private static final String GTALK_HOST = "talk.google.com";
+    private static final String DEFAULT_SEND_FILE = "pom.xml";
 
     /* XMPP server settings */
     private final ConnectionConfiguration config;
@@ -58,6 +60,7 @@ public class Natty {
 
     private Socket socket;
     public SendFileServer fileServer;
+
 
     public Natty() {
       config = new ConnectionConfiguration(GTALK_HOST, GTALK_PORT, "gmail.com");
@@ -151,9 +154,13 @@ public class Natty {
           System.out.println("GOT " + nm.getType() + " " + body);
           start("");
           sendNattyProcess(body);
-          if (nm.isAnswer()) {
-            // received answer attempt to send file
-            //private SendFileClient sfc = new SendFileClient(host, port);
+        }
+        else if (nm.isCandidate()) {
+          String candidate = nm.getCandidate();
+          System.out.println("GOT CANDIDATE: " + body);
+          candidates.add(candidate);
+          if (from != null) {
+            sendFile(nm.getRemote());
           }
         }
       }
@@ -164,6 +171,24 @@ public class Natty {
       catch (InterruptedException ie) {
         ie.printStackTrace();
         System.out.println("ERROR " + ie);
+      }
+    }
+
+    /* should combine this with part of bindPort to remove redundant code */
+    private void sendFile(String address) throws IOException {
+      try {
+        URI uri = new URI("natty://" + address);
+        String host = uri.getHost();
+        int port = uri.getPort();
+        if (host == null || port == -1) {
+          throw new URISyntaxException(uri.toString(), "Invalid host:port");
+        }
+        File file = new File(DEFAULT_SEND_FILE);
+        SendFileClient sfc = new SendFileClient(host, port, file);
+        sfc.run();
+      } 
+      catch (Exception e) {
+        System.out.println("ERROR " + e);
       }
     }
 
@@ -178,13 +203,14 @@ public class Natty {
         if (startFileServer) {
           System.out.println("Starting file server on port " + port);
           fileServer = new SendFileServer(port);
+          fileServer.run();
         } else {
           socket = new Socket();
           socket.bind(new InetSocketAddress(host, port));
           System.out.println("Successfully bound to local port " + port);
         }
-      } catch (URISyntaxException use) {
-        System.out.println("ERROR " + use);
+      } catch (Exception e) {
+        System.out.println("ERROR " + e);
       }
     }
 
