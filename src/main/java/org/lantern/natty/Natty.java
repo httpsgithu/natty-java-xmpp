@@ -313,7 +313,9 @@ public class Natty {
       Natty natty = new Natty();
       final String user = args[0];
       final String pass = args[1];
-      natty.setTarget(args[2]);
+      if (args.length > 2) {
+        natty.setTarget(args[2]);
+      }
 
       // Create a connection to the jabber.org server on a specific port.
       natty.connectGTalk(user, pass);

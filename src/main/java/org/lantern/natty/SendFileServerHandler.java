@@ -36,6 +36,7 @@ public class SendFileServerHandler extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelReadComplete(ChannelHandlerContext ctx) throws Exception {
+        log.info("Channel READ COMPLETE");
         ctx.flush();
     }
 
