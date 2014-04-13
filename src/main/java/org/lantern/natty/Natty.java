@@ -38,7 +38,7 @@ public class Natty {
 
     private static final int SENDFILESERVER_PORT = 8585; 
     private static final int GTALK_PORT = 5222;
-    private static final int NATTY_ALIVE_INTERVAL = 500000;
+    private static final int NATTY_ALIVE_INTERVAL = 50000;
     private static final String GTALK_HOST = "talk.google.com";
     private static final String DEFAULT_SEND_FILE = "pom.xml";
 
@@ -178,43 +178,37 @@ public class Natty {
       }
     }
 
-    /* should combine this with part of bindPort to remove redundant code */
-    private void sendFile(String address) throws IOException {
-      try {
-        URI uri = new URI("natty://" + address);
-        String host = uri.getHost();
-        int port = uri.getPort();
-        if (host == null || port == -1) {
-          throw new URISyntaxException(uri.toString(), "Invalid host:port");
-        }
-        File file = new File(DEFAULT_SEND_FILE);
-        SendFileClient sfc = new SendFileClient(host, port, file);
-        sfc.run();
-      } 
-      catch (Exception e) {
-        System.out.println("ERROR " + e);
+    private URI checkAddress(String address) throws Exception {
+      URI uri = new URI("natty://" + address);
+      String host = uri.getHost();
+      int port = uri.getPort();
+      if (host == null || port == -1) {
+        throw new URISyntaxException(uri.toString(), "Invalid host:port");
       }
+      return uri;
     }
 
-    private void bindPort(String address, boolean startFileServer) throws IOException {
-      try {
-        URI uri = new URI("natty://" + address);
-        String host = uri.getHost();
-        int port = uri.getPort();
-        if (host == null || port == -1) {
-          throw new URISyntaxException(uri.toString(), "Invalid host:port");
-        }
-        if (startFileServer) {
-          System.out.println("Starting file server on port " + port);
-          fileServer = new SendFileServer(port);
-          fileServer.run();
-        } else {
-          socket = new Socket();
-          socket.bind(new InetSocketAddress(host, port));
-          System.out.println("Successfully bound to local port " + port);
-        }
-      } catch (Exception e) {
-        System.out.println("ERROR " + e);
+    /* should combine this with part of bindPort to remove redundant code */
+    private void sendFile(String address) throws Exception {
+      URI uri = checkAddress(address);
+      File file = new File(DEFAULT_SEND_FILE);
+      SendFileClient sfc = new SendFileClient(uri.getHost(), uri.getPort(), file);
+      sfc.run();
+    }
+
+    private void bindPort(String address, boolean startFileServer) throws Exception {
+      URI uri = checkAddress(address);
+      String host = uri.getHost();
+      int port = uri.getPort();
+
+      if (startFileServer) {
+        System.out.println("Starting file server on port " + port);
+        fileServer = new SendFileServer(port);
+        fileServer.run();
+      } else {
+        socket = new Socket();
+        socket.bind(new InetSocketAddress(host, port));
+        System.out.println("Successfully bound to local port " + port);
       }
     }
 
@@ -277,14 +271,9 @@ public class Natty {
     }
 
     private void sendNattyProcess(String msg) throws IOException, InterruptedException {
-      /*for (String candidate : candidates) {
-        writer.write(candidate);
-        writer.newLine();
-      }*/
       writer.write(msg);
       writer.newLine();
       writer.flush();
-      //writer.close();
     }
 
     private void start(final String target) throws IOException, InterruptedException, IOException {
@@ -312,6 +301,11 @@ public class Natty {
         new Read(this.reader).start();
     }
 
+    private void stop() throws IOException {
+      process.destroy();
+      writer.close();
+    }
+
     public void setTarget(String target) {
       this.target = target;
     }
@@ -328,6 +322,9 @@ public class Natty {
       natty.connectGTalk(user, pass);
       
       Thread.sleep(NATTY_ALIVE_INTERVAL);
+
+      natty.stop();
+
     }
 
 }
