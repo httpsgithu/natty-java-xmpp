@@ -60,8 +60,7 @@ public class NattyMessage {
         remote + ", local=" + local + ", type=" + type + "]";
     }
 
-   public static NattyMessage fromJson(String json) throws JsonParseException, 
-            JsonMappingException, IOException {
+   public static NattyMessage fromJson(String json) throws JsonMappingException, IOException {
       if (json.contains("WARNING")) {
         return null;
       }

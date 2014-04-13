@@ -26,6 +26,7 @@ import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.RosterListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
+import org.codehaus.jackson.JsonParseException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
@@ -37,7 +38,7 @@ public class Natty {
 
     private static final int SENDFILESERVER_PORT = 8585; 
     private static final int GTALK_PORT = 5222;
-    private static final int NATTY_ALIVE_INTERVAL = 50000;
+    private static final int NATTY_ALIVE_INTERVAL = 500000;
     private static final String GTALK_HOST = "talk.google.com";
     private static final String DEFAULT_SEND_FILE = "pom.xml";
 
@@ -67,6 +68,7 @@ public class Natty {
       gtalk  = new XMPPConnection(config);
       socket = null;
       sentAnswer = false;
+      builder = null;
       target = "";
       candidates = new ArrayList<String>();
     }
@@ -149,19 +151,21 @@ public class Natty {
 
         NattyMessage nm = NattyMessage.fromJson(body);
         if (nm.isOffer() || nm.isAnswer()) {
-          /* Received offer or answer; write to natty process
-           * */
           System.out.println("GOT " + nm.getType() + " " + body);
-          start("");
+
+          /* natty process hasn't started yet if we are the answerer */
+          if (builder == null) {
+            start("");
+            sentAnswer = true;
+          }
+
           sendNattyProcess(body);
         }
         else if (nm.isCandidate()) {
           String candidate = nm.getCandidate();
+          //candidates.add(body);
+          sendNattyProcess(body);
           System.out.println("GOT CANDIDATE: " + body);
-          candidates.add(candidate);
-          if (from != null) {
-            sendFile(nm.getRemote());
-          }
         }
       }
       catch (IOException ioe) {
@@ -233,27 +237,31 @@ public class Natty {
               continue;
             }
 
-            NattyMessage msg = NattyMessage.fromJson(line);
-            if (msg == null) {
+            try {
+              NattyMessage msg = NattyMessage.fromJson(line);
+
+              if (msg == null) {
+                continue;
+              }
+
+              if (msg.is5Tuple()) {
+                /* found our 5-tuple! 
+                 * if answerer, start file server */
+                bindPort(msg.getLocal(), sentAnswer);
+                if (!sentAnswer) {
+                  /* if we sent the offer, send the file! */
+                  sendFile(msg.getRemote());
+                }
+                break;
+              }
+
+              final Message packet = new Message();
+              packet.setTo(from);
+              packet.setBody(line);              
+              gtalk.sendPacket(packet);
+            }
+            catch (Exception jse) {
               continue;
-            }
-            final Message packet = new Message();
-            packet.setTo(from);
-            packet.setBody(line);              
-            gtalk.sendPacket(packet);
-            if (msg.isAnswer()) {
-              sentAnswer = true;
-            }
-            if (msg.getCandidate() != null) {
-              String local  = msg.getLocal();
-              String remote = msg.getRemote();
-              candidates.add(line);
-              if (local != null && socket == null) {
-                bindPort(local, false);
-              }
-              if (sentAnswer && remote != null) {
-                bindPort(remote, true);
-              }
             }
           }
         } catch (IOException e) {
@@ -266,25 +274,24 @@ public class Natty {
     private void createOffer() throws IOException, InterruptedException {
       System.out.println("Sending offer to peer " + from);
       start("-offer");
-      Thread.sleep(2000);
     }
 
     private void sendNattyProcess(String msg) throws IOException, InterruptedException {
-      writer.write(msg);
-      writer.newLine();
-      for (String candidate : candidates) {
-        //System.out.println("Sending candidate " + candidate);
+      /*for (String candidate : candidates) {
         writer.write(candidate);
         writer.newLine();
-      }
+      }*/
+      writer.write(msg);
+      writer.newLine();
       writer.flush();
-      writer.close();
+      //writer.close();
     }
 
     private void start(final String target) throws IOException, InterruptedException, IOException {
 
         final List<String> command = new ArrayList<String>();
         command.add("./natty");
+        command.add("-debug");
         command.add(target);
         builder = new ProcessBuilder(command);
 
