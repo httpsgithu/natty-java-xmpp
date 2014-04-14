@@ -1,22 +1,21 @@
 package org.lantern.natty;
 
 import java.io.BufferedReader;
+import java.io.BufferedWriter;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
-import java.io.BufferedWriter;
-import java.io.OutputStreamWriter;
 import java.io.OutputStream;
-import java.io.File;
+import java.io.OutputStreamWriter;
+import java.net.InetSocketAddress;
+import java.net.Socket;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
-
-import java.net.Socket;
-import java.net.InetSocketAddress;
-import java.net.URI;
-import java.net.URISyntaxException;
 
 import org.jivesoftware.smack.Connection;
 import org.jivesoftware.smack.ConnectionConfiguration;
@@ -26,16 +25,17 @@ import org.jivesoftware.smack.RosterEntry;
 import org.jivesoftware.smack.RosterListener;
 import org.jivesoftware.smack.XMPPConnection;
 import org.jivesoftware.smack.XMPPException;
-import org.codehaus.jackson.JsonParseException;
 import org.jivesoftware.smack.filter.PacketFilter;
 import org.jivesoftware.smack.packet.Message;
 import org.jivesoftware.smack.packet.Packet;
 import org.jivesoftware.smack.packet.Presence;
-
-import org.lantern.natty.NattyMessage;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 public class Natty {
 
+    private final Logger log = LoggerFactory.getLogger(getClass());
+    
     private static final int SENDFILESERVER_PORT = 8585; 
     private static final int GTALK_PORT = 5222;
     private static final int NATTY_ALIVE_INTERVAL = 50000;
@@ -189,13 +189,16 @@ public class Natty {
     }
 
     /* should combine this with part of bindPort to remove redundant code */
-    private void sendFile(String address) throws Exception {
-      URI uri = checkAddress(address);
-      File file = new File(DEFAULT_SEND_FILE);
-      SendFileClient sfc = new SendFileClient(uri.getHost(), uri.getPort(), file);
-      sfc.run();
+    private void sendFile(String local, String remote) throws Exception {
+        URI localAddress = checkAddress(local);
+        URI remoteAddress = checkAddress(remote);
+        File file = new File(DEFAULT_SEND_FILE);
+        SendFileClient sfc = new SendFileClient(localAddress, remoteAddress,
+                file);
+        sfc.run();
     }
 
+    /*
     private void bindPort(String address, boolean startFileServer) throws Exception {
       URI uri = checkAddress(address);
       String host = uri.getHost();
@@ -211,6 +214,7 @@ public class Natty {
         System.out.println("Successfully bound to local port " + port);
       }
     }
+    */
 
     private class Read extends Thread {
 
@@ -241,10 +245,13 @@ public class Natty {
               if (msg.is5Tuple()) {
                 /* found our 5-tuple! 
                  * if answerer, start file server */
-                bindPort(msg.getLocal(), sentAnswer);
+                //bindPort(msg.getLocal(), sentAnswer);
+              System.out.println("Starting file server on " + checkAddress(msg.getLocal()));
+              fileServer = new SendFileServer(checkAddress(msg.getLocal()));
+              fileServer.run();
                 if (!sentAnswer) {
                   /* if we sent the offer, send the file! */
-                  sendFile(msg.getRemote());
+                  sendFile(msg.getLocal(), msg.getRemote());
                 }
                 break;
               }

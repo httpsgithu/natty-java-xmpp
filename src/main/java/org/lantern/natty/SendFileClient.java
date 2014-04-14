@@ -11,6 +11,7 @@ import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
 import java.io.File;
+import java.net.URI;
 import java.util.concurrent.ThreadFactory;
 
 /**
@@ -19,15 +20,17 @@ import java.util.concurrent.ThreadFactory;
 public class SendFileClient {
 
 
-    private final String host;
-    private final int port;
+    //private final String host;
+    //private final int port;
 
     private final File file;
+    private final URI local;
+    private final URI remote;
 
-    public SendFileClient(final String host, final int port,
+    public SendFileClient(final URI localAddress, final URI remoteAddress,
             final File file) {
-        this.host = host;
-        this.port = port;
+        this.local = localAddress;
+        this.remote = remoteAddress;
         this.file = file;
     }
 
@@ -51,7 +54,9 @@ public class SendFileClient {
                         }
                     });
             // Start the client.
-            final ChannelFuture f = boot.connect(host, port).sync();
+            boot.bind(this.local.getHost(), this.local.getPort());
+            final ChannelFuture f = 
+                boot.connect(this.remote.getHost(), this.remote.getPort()).sync();
             // Wait until the connection is closed.
             f.channel().closeFuture().sync();
         } finally {

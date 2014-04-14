@@ -12,17 +12,17 @@ import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.concurrent.TimeUnit;
-import java.util.logging.Level;
-import java.util.logging.Logger;
 
 import org.apache.commons.io.IOUtils;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * Handler implementation for sending a file.
  */
 public class SendFileClientHandler extends SimpleChannelInboundHandler<ByteBuf> {
 
-    private static final Logger log = Logger.getLogger(SendFileClientHandler.class.getName());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final ByteBuf message;
 
@@ -31,9 +31,8 @@ public class SendFileClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
 
     public SendFileClientHandler(final File file) {
         super(false);
-
+        log.debug("Sending file!!");
         message = Unpooled.buffer((int) file.length());
-
         FileInputStream is = null;
         try {
             is = new FileInputStream(file);
@@ -41,7 +40,7 @@ public class SendFileClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
                 message.writeByte(is.read());
             }
         } catch (final IOException ioe) {
-            
+            log.warn("Error sending file?", ioe);
         } finally {
             IOUtils.closeQuietly(is);
         }
@@ -67,7 +66,7 @@ public class SendFileClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
     @Override
     public void exceptionCaught(final ChannelHandlerContext ctx,
             final Throwable cause) {
-        log.log(Level.WARNING, "close the connection when an exception is raised", cause);
+        log.warn("close the connection when an exception is raised", cause);
         ctx.close();
     }
 

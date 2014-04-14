@@ -10,6 +10,7 @@ import io.netty.channel.udt.nio.NioUdtProvider;
 import io.netty.handler.logging.LogLevel;
 import io.netty.handler.logging.LoggingHandler;
 
+import java.net.URI;
 import java.util.concurrent.ThreadFactory;
 import java.util.logging.Logger;
 
@@ -22,8 +23,11 @@ public class SendFileServer {
 
     private final int port;
 
-    public SendFileServer(final int port) {
-        this.port = port;
+    private final String host;
+
+    public SendFileServer(final URI uri) {
+        this.port = uri.getPort();
+        this.host = uri.getHost();
     }
 
     public void run() throws Exception {
