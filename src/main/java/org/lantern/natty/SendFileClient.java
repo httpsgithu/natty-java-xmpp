@@ -56,6 +56,7 @@ public class SendFileClient {
                         }
                     });
             // Start the client.
+            log.debug("Binding to port {}", this.local.getPort());
             boot.bind(this.local.getHost(), this.local.getPort());
             final ChannelFuture f = 
                 boot.connect(this.remote.getHost(), this.remote.getPort()).sync();
