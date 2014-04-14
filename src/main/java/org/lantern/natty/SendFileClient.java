@@ -3,6 +3,7 @@ package org.lantern.natty;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
 import io.netty.channel.nio.NioEventLoopGroup;
 import io.netty.channel.udt.UdtChannel;
 import io.netty.channel.udt.nio.NioUdtProvider;
@@ -39,6 +40,7 @@ public class SendFileClient {
             final Bootstrap boot = new Bootstrap();
             boot.group(connectGroup)
                     .channelFactory(NioUdtProvider.BYTE_CONNECTOR)
+                    .option(ChannelOption.SO_REUSEADDR, true)
                     .handler(new ChannelInitializer<UdtChannel>() {
                         @Override
                         public void initChannel(final UdtChannel ch)

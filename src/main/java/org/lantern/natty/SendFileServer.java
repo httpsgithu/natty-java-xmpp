@@ -38,6 +38,7 @@ public class SendFileServer {
             final ServerBootstrap boot = new ServerBootstrap();
             boot.group(acceptGroup, connectGroup)
                     .channelFactory(NioUdtProvider.BYTE_ACCEPTOR)
+                    .option(ChannelOption.SO_REUSEADDR, true)
                     .option(ChannelOption.SO_BACKLOG, 10)
                     .handler(new LoggingHandler(LogLevel.INFO))
                     .childHandler(new ChannelInitializer<UdtChannel>() {
