@@ -220,61 +220,63 @@ public class Natty {
 
       private BufferedReader reader;
 
-      public Read(BufferedReader reader) {
-        this.reader = reader;
-      }
-
-      public void run() {
-        try {
-          String line;
-          while ((line = this.reader.readLine()) != null) {
-            System.out.println("NATTY RESPONSE " + line);
-
-            /* skip empty lines */
-            if (line.isEmpty()) {
-              continue;
-            }
-
-            try {
-              NattyMessage msg = NattyMessage.fromJson(line);
-
-              if (msg == null) {
-                continue;
-              }
-
-              if (msg.is5Tuple()) {
-                /* found our 5-tuple! 
-                 * if answerer, start file server */
-                //bindPort(msg.getLocal(), sentAnswer);
-              System.out.println("Starting file server on " + checkAddress(msg.getLocal()));
-              fileServer = new SendFileServer(checkAddress(msg.getLocal()));
-              fileServer.run();
-                if (!sentAnswer) {
-                  /* if we sent the offer, send the file! */
-                  sendFile(msg.getLocal(), msg.getRemote());
-                }
-                break;
-              }
-
-              final Message packet = new Message();
-              packet.setTo(from);
-              packet.setBody(line);              
-              gtalk.sendPacket(packet);
-            }
-            catch (Exception jse) {
-              continue;
-            }
-          }
-        } catch (IOException e) {
-          e.printStackTrace();
+        public Read(BufferedReader reader) {
+            this.reader = reader;
         }
-      }
+
+        public void run() {
+            try {
+                String line;
+                while ((line = this.reader.readLine()) != null) {
+                    System.out.println("NATTY RESPONSE " + line);
+
+                    // skip empty lines
+                    if (line.isEmpty()) {
+                        continue;
+                    }
+
+                    try {
+                        NattyMessage msg = NattyMessage.fromJson(line);
+
+                        if (msg == null) {
+                            continue;
+                        }
+
+                        if (msg.is5Tuple()) {
+                            // found our 5-tuple!
+                            // if answerer, start file server
+                            // bindPort(msg.getLocal(), sentAnswer);
+                            System.out.println("Starting file server on "
+                                    + checkAddress(msg.getLocal()));
+                            fileServer = new SendFileServer(
+                                    checkAddress(msg.getLocal()));
+                            fileServer.run();
+                            if (!sentAnswer) {
+                                log.debug("Sending file!!");
+                                // if we sent the offer, send the file!
+                                sendFile(msg.getLocal(), msg.getRemote());
+                            }
+                            break;
+                        }
+
+                        final Message packet = new Message();
+                        packet.setTo(from);
+                        packet.setBody(line);
+                        gtalk.sendPacket(packet);
+                    } catch (Exception jse) {
+                        continue;
+                    }
+                }
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+        }
     }
 
     /* Run natty process to generate offer */
     private void createOffer() throws IOException, InterruptedException {
-      System.out.println("Sending offer to peer " + from);
-      start("-offer");
+        System.out.println("Sending offer to peer " + from);
+        start("-offer");
     }
 
     private void sendNattyProcess(String msg) throws IOException, InterruptedException {

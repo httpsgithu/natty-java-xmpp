@@ -44,6 +44,7 @@ public class SendFileClientHandler extends SimpleChannelInboundHandler<ByteBuf> 
         } finally {
             IOUtils.closeQuietly(is);
         }
+        log.debug("SENT FILE!!");
     }
 
     @Override

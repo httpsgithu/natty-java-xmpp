@@ -14,14 +14,15 @@ import java.io.File;
 import java.net.URI;
 import java.util.concurrent.ThreadFactory;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 /**
  * UDT client for sending a file.
  */
 public class SendFileClient {
 
-
-    //private final String host;
-    //private final int port;
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final File file;
     private final URI local;
@@ -35,6 +36,7 @@ public class SendFileClient {
     }
 
     public void run() throws Exception {
+        log.debug("Starting send file client... from {} to {}", local, remote);
         // Configure the client.
         final ThreadFactory connectFactory = new UtilThreadFactory("connect");
         final NioEventLoopGroup connectGroup = new NioEventLoopGroup(1,
