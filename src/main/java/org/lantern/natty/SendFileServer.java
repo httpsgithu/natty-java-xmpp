@@ -12,14 +12,16 @@ import io.netty.handler.logging.LoggingHandler;
 
 import java.net.URI;
 import java.util.concurrent.ThreadFactory;
-import java.util.logging.Logger;
+
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * UDT file server that receives files uploaded from clients.
  */
 public class SendFileServer {
 
-    private static final Logger log = Logger.getLogger(SendFileServer.class.getName());
+    private final Logger log = LoggerFactory.getLogger(getClass());
 
     private final int port;
 
@@ -56,6 +58,7 @@ public class SendFileServer {
                     });
             // Start the server.
             final ChannelFuture future = boot.bind(port).sync();
+            log.debug("Server bound to port: {}", port);
             // Wait until the server socket is closed.
             future.channel().closeFuture().sync();
         } finally {
