@@ -246,15 +246,16 @@ public class Natty {
                             // found our 5-tuple!
                             // if answerer, start file server
                             // bindPort(msg.getLocal(), sentAnswer);
-                            System.out.println("Starting file server on "
-                                    + checkAddress(msg.getLocal()));
-                            fileServer = new SendFileServer(
-                                    checkAddress(msg.getLocal()));
-                            fileServer.run();
                             if (!sentAnswer) {
                                 log.debug("Sending file!!");
                                 // if we sent the offer, send the file!
                                 sendFile(msg.getLocal(), msg.getRemote());
+                            } else {
+                                System.out.println("Starting file server on "
+                                        + checkAddress(msg.getLocal()));
+                                fileServer = new SendFileServer(
+                                        checkAddress(msg.getLocal()));
+                                fileServer.run();
                             }
                             break;
                         }
