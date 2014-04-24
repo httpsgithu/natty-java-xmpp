@@ -169,8 +169,7 @@ public class Natty {
         }
       }
       catch (IOException ioe) {
-        ioe.printStackTrace();
-        System.out.println("ERROR " + ioe);
+
       }
       catch (InterruptedException ie) {
         ie.printStackTrace();
@@ -269,7 +268,7 @@ public class Natty {
                     }
                 }
             } catch (IOException e) {
-                e.printStackTrace();
+
             }
         }
     }
@@ -280,7 +279,7 @@ public class Natty {
         start("-offer");
     }
 
-    private void sendNattyProcess(String msg) throws IOException, InterruptedException {
+    private void sendNattyProcess(String msg) throws InterruptedException, IOException {
       writer.write(msg);
       writer.newLine();
       writer.flush();
